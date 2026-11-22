@@ -76,28 +76,30 @@ public sealed record TouchpadSettings(
         }
     }
 
-    private static TouchpadSettings FromKey(RegistryKey key)
+    private static TouchpadSettings FromKey(RegistryKey key) =>
+        FromValues(name => key.GetValue(name) is int value ? value : null);
+
+    /// <summary>Builds settings from raw DWORD values. <paramref name="readValue"/> returns null for a missing value.</summary>
+    internal static TouchpadSettings FromValues(Func<string, int?> readValue)
     {
         var d = Defaults;
         return new TouchpadSettings(
-            TapsEnabled: ReadBool(key, "TapsEnabled", d.TapsEnabled),
-            TwoFingerTapEnabled: ReadBool(key, "TwoFingerTapEnabled", d.TwoFingerTapEnabled),
-            TapAndDragEnabled: ReadBool(key, "TapAndDrag", d.TapAndDragEnabled),
-            RightClickZoneEnabled: ReadBool(key, "RightClickZoneEnabled", d.RightClickZoneEnabled),
-            ScrollEnabled: ReadBool(key, "PanEnabled", d.ScrollEnabled),
-            ZoomEnabled: ReadBool(key, "ZoomEnabled", d.ZoomEnabled),
-            NaturalScrolling: ReadInt(key, "ScrollDirection") is not int dir || dir == 0,
-            CursorSpeed: Math.Clamp(ReadInt(key, "CursorSpeed") ?? d.CursorSpeed, 0, MaxCursorSpeed),
-            ThreeFingerSwipe: ToSwipe(ReadInt(key, "ThreeFingerSlideEnabled"), d.ThreeFingerSwipe),
-            FourFingerSwipe: ToSwipe(ReadInt(key, "FourFingerSlideEnabled"), d.FourFingerSwipe),
-            ThreeFingerTap: ToTap(ReadInt(key, "ThreeFingerTapEnabled"), d.ThreeFingerTap),
-            FourFingerTap: ToTap(ReadInt(key, "FourFingerTapEnabled"), d.FourFingerTap));
+            TapsEnabled: ReadBool(readValue, "TapsEnabled", d.TapsEnabled),
+            TwoFingerTapEnabled: ReadBool(readValue, "TwoFingerTapEnabled", d.TwoFingerTapEnabled),
+            TapAndDragEnabled: ReadBool(readValue, "TapAndDrag", d.TapAndDragEnabled),
+            RightClickZoneEnabled: ReadBool(readValue, "RightClickZoneEnabled", d.RightClickZoneEnabled),
+            ScrollEnabled: ReadBool(readValue, "PanEnabled", d.ScrollEnabled),
+            ZoomEnabled: ReadBool(readValue, "ZoomEnabled", d.ZoomEnabled),
+            NaturalScrolling: readValue("ScrollDirection") is not int dir || dir == 0,
+            CursorSpeed: Math.Clamp(readValue("CursorSpeed") ?? d.CursorSpeed, 0, MaxCursorSpeed),
+            ThreeFingerSwipe: ToSwipe(readValue("ThreeFingerSlideEnabled"), d.ThreeFingerSwipe),
+            FourFingerSwipe: ToSwipe(readValue("FourFingerSlideEnabled"), d.FourFingerSwipe),
+            ThreeFingerTap: ToTap(readValue("ThreeFingerTapEnabled"), d.ThreeFingerTap),
+            FourFingerTap: ToTap(readValue("FourFingerTapEnabled"), d.FourFingerTap));
     }
 
-    private static int? ReadInt(RegistryKey key, string name) => key.GetValue(name) is int value ? value : null;
-
-    private static bool ReadBool(RegistryKey key, string name, bool fallback) =>
-        ReadInt(key, name) is int value ? value != 0 : fallback;
+    private static bool ReadBool(Func<string, int?> readValue, string name, bool fallback) =>
+        readValue(name) is int value ? value != 0 : fallback;
 
     private static SwipeAction ToSwipe(int? value, SwipeAction fallback) => value switch
     {
