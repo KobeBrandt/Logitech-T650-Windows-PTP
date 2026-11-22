@@ -1,0 +1,67 @@
+name: Release
+
+# Pushing a version tag (for example v2.0.1) builds the setup .exe and publishes a GitHub release.
+# The tag must match <Version> in src/T650Bridge/T650Bridge.csproj (use Installer/Bump-Version.ps1).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check tag matches project version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $csproj = Get-Content src/T650Bridge/T650Bridge.csproj -Raw
+          if ($csproj -notmatch '<Version>([\d\.]+)</Version>') { Write-Error 'No <Version> in csproj.'; exit 1 }
+          $version = $Matches[1]
+          if ($tag -ne "v$version") {
+            Write-Error "Tag $tag does not match project version v$version. Run Installer/Bump-Version.ps1 first."
+            exit 1
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build and test
+        run: |
+          dotnet build T650Tray.slnx -c Release
+          dotnet test T650Tray.slnx -c Release --no-build
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: ./Installer/Build-Installer.ps1 -Version '${{ steps.version.outputs.version }}'
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $setup = "Dist/T650Tray-Setup-v$version.exe"
+          $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
+          $notes = @"
+          ## Install
+          Download **T650Tray-Setup-v$version.exe** and run it. It needs admin rights and includes .NET, so nothing else has to be installed.
+
+          SHA-256: ``$hash``
+          "@
+          gh release create '${{ github.ref_name }}' $setup Dist/SHA256SUMS.txt `
+            --title "Logitech T650 Tray v$version" `
+            --notes $notes `
+            --generate-notes `
+            --verify-tag
