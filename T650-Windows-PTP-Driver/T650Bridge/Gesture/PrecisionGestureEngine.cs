@@ -203,13 +203,13 @@ public class PrecisionGestureEngine
                             {
                                 if (_totalDX > 0)
                                 {
-                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe RIGHT (Next Desktop: Ctrl+Win+Right)");
-                                    SendDesktopSwitch(next: true);
+                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe RIGHT (Prev Desktop: Ctrl+Win+Left)");
+                                    SendDesktopSwitch(next: false);
                                 }
                                 else
                                 {
-                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe LEFT (Prev Desktop: Ctrl+Win+Left)");
-                                    SendDesktopSwitch(next: false);
+                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe LEFT (Next Desktop: Ctrl+Win+Right)");
+                                    SendDesktopSwitch(next: true);
                                 }
                             }
                             else
@@ -221,8 +221,8 @@ public class PrecisionGestureEngine
                                 }
                                 else
                                 {
-                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe DOWN (Action Center: Win+A)");
-                                    SendKeyCombo(VK_LWIN, VK_A);
+                                    GestureTriggered?.Invoke("Gesture: 4-Finger Swipe DOWN (Show Desktop: Win+D)");
+                                    SendKeyCombo(VK_LWIN, VK_D);
                                 }
                             }
                         }
@@ -262,6 +262,11 @@ public class PrecisionGestureEngine
                         GestureTriggered?.Invoke("Tap: 3-Finger (Windows Search: Win+S)");
                         SendKeyCombo(VK_LWIN, VK_S);
                     }
+                    else if (_maxFingersInSession >= 4)
+                    {
+                        GestureTriggered?.Invoke("Tap: 4-Finger (Notification Center: Win+N)");
+                        SendKeyCombo(VK_LWIN, VK_N);
+                    }
                 }
 
                 _sessionActive = false;
@@ -288,8 +293,8 @@ public class PrecisionGestureEngine
     private const byte VK_MENU = 0x12; // Alt
     private const byte VK_LEFT = 0x25;
     private const byte VK_RIGHT = 0x27;
-    private const byte VK_A = 0x41;
     private const byte VK_D = 0x44;
+    private const byte VK_N = 0x4E;
     private const byte VK_S = 0x53;
     private const byte VK_LWIN = 0x5B;
 
