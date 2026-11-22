@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reflection;
 using System.Security.Principal;
 using T650Bridge.Gesture;
@@ -9,7 +8,7 @@ using T650Bridge.UI;
 
 namespace T650Bridge;
 
-class Program
+internal static class Program
 {
     private static readonly TimeSpan SettingsRefreshInterval = TimeSpan.FromSeconds(2);
 
@@ -78,6 +77,7 @@ class Program
 
         assembler.FrameReady += frame =>
         {
+            InteractiveDesktop.EnsureAttachedForCurrentThread();
             frameIndex++;
 
             if (enableGestures)

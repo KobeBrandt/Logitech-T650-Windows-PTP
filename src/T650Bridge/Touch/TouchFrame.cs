@@ -9,12 +9,12 @@ public enum ContactStatus : byte
 
 public struct TouchContact
 {
-    public byte Id;
-    public ContactStatus Status;
-    public byte Type;
-    public ushort X;
-    public ushort Y;
-    public byte Area;
+    public byte Id { get; init; }
+    public ContactStatus Status { get; init; }
+    public byte Type { get; init; }
+    public ushort X { get; init; }
+    public ushort Y { get; init; }
+    public byte Area { get; init; }
     public bool IsTouching => Id != 0;
 }
 

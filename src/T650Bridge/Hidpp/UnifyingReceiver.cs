@@ -1,5 +1,4 @@
 using HidSharp;
-using System.Diagnostics;
 
 namespace T650Bridge.Hidpp;
 
@@ -10,7 +9,7 @@ public enum DeviceConnectionState
     TouchpadActive                  // Dongle in, T650 awake & streaming (Green)
 }
 
-public class UnifyingReceiver : IDisposable
+public sealed class UnifyingReceiver : IDisposable
 {
     public const int LogitechVid = 0x046D;
     public const int UnifyingPid = 0xC52B;

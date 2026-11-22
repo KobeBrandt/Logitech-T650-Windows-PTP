@@ -1,13 +1,10 @@
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using T650Bridge.Hidpp;
 
 namespace T650Bridge.UI;
 
-public class TrayIconManager : IDisposable
+public sealed class TrayIconManager : IDisposable
 {
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetConsoleWindow();
@@ -43,8 +40,8 @@ public class TrayIconManager : IDisposable
     private Icon? _iconDisconnected;
 
     public bool IsActive { get; private set; } = true;
-    public bool IsConsoleHidden { get; private set; } = false;
-    public bool EnableNotifications { get; set; } = false;
+    public bool IsConsoleHidden { get; private set; }
+    public bool EnableNotifications { get; set; }
 
     private readonly bool _isElevated;
 
@@ -302,7 +299,7 @@ public class TrayIconManager : IDisposable
     {
         // NotifyIcon.Text Win32 API limit is 63 characters
         if (string.IsNullOrEmpty(text)) return "Logitech T650";
-        return text.Length > 63 ? text.Substring(0, 60) + "..." : text;
+        return text.Length > 63 ? string.Concat(text.AsSpan(0, 60), "...") : text;
     }
 
     public void ShowBalloon(string title, string message, ToolTipIcon icon = ToolTipIcon.Info, bool force = false)

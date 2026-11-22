@@ -68,12 +68,6 @@ public class FrameAssembler
         }
     }
 
-    private static bool IsContactActive(ReadOnlySpan<byte> b)
-    {
-        // If all coordinate/status bytes are 0, slot is empty
-        return (b[0] | b[1] | b[2] | b[3]) != 0;
-    }
-
     private static TouchContact ParseContact(ReadOnlySpan<byte> b, byte fingerId)
     {
         byte type = (byte)(b[0] >> 6);

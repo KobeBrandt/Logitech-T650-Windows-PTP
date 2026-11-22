@@ -1,0 +1,56 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{csproj,props,targets,wxs,xml,json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Namespaces and usings
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = outside_namespace:warning
+
+# Prefer var where the type is obvious, explicit types otherwise
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# Braces and expression bodies
+csharp_prefer_braces = when_multiline:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+
+# Unused code
+dotnet_diagnostic.IDE0005.severity = warning # unnecessary using
+dotnet_diagnostic.IDE0051.severity = warning # unused private member
+dotnet_diagnostic.IDE0052.severity = warning # unread private member
+dotnet_diagnostic.IDE0060.severity = warning # unused parameter
+
+# Naming: PascalCase for types and members, _camelCase for private fields
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+dotnet_naming_style.underscore_camel.required_prefix = _
+
+dotnet_naming_rule.constants_pascal.severity = warning
+dotnet_naming_rule.constants_pascal.symbols = constants
+dotnet_naming_rule.constants_pascal.style = pascal
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.required_modifiers = const
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+# Win32 interop keeps the native names (VK_TAB, MOUSEEVENTF_MOVE, POINT, mouse_event)
+[src/T650Bridge/{Interop/*.cs,UI/TrayIconManager.cs,Hidpp/*.cs}]
+dotnet_naming_rule.constants_pascal.severity = none
+dotnet_diagnostic.CA1401.severity = none
