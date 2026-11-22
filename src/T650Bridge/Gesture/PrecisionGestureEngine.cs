@@ -1,6 +1,4 @@
-using T650Bridge.Interop;
 using T650Bridge.Touch;
-using static T650Bridge.Gesture.InputSender;
 
 namespace T650Bridge.Gesture;
 
@@ -27,6 +25,9 @@ public class PrecisionGestureEngine
     private const double ScrollEmitThreshold = 30.0;
     private const double RightClickZoneMinX = FrameAssembler.MaxX * 0.5;
     private const double RightClickZoneMinY = FrameAssembler.MaxY * 0.8;
+
+    private readonly IInputSink _input;
+    private readonly Func<DateTime> _utcNow;
 
     // Touch session tracking
     private bool _sessionActive;
@@ -62,13 +63,19 @@ public class PrecisionGestureEngine
 
     public event Action<string>? GestureTriggered;
 
+    /// <param name="input">Where synthesized input goes. Defaults to Windows.</param>
+    /// <param name="utcNow">Clock used for tap timing. Defaults to <see cref="DateTime.UtcNow"/>.</param>
+    public PrecisionGestureEngine(IInputSink? input = null, Func<DateTime>? utcNow = null)
+    {
+        _input = input ?? new Win32InputSink();
+        _utcNow = utcNow ?? (() => DateTime.UtcNow);
+    }
+
     /// <summary>Current Windows touchpad settings. Replaced as a whole when the user changes them.</summary>
     public TouchpadSettings Settings { get; set; } = TouchpadSettings.Defaults;
 
     public void ProcessFrame(TouchFrame frame)
     {
-        InteractiveDesktop.EnsureAttachedForCurrentThread();
-
         var contacts = frame.Contacts.Where(c => c.IsTouching).ToList();
         HandlePhysicalButton(frame.PhysicalButtonPressed, contacts);
 
@@ -117,7 +124,7 @@ public class PrecisionGestureEngine
     {
         var settings = Settings;
         _sessionActive = true;
-        _sessionStartTime = DateTime.UtcNow;
+        _sessionStartTime = _utcNow();
         _maxFingersInSession = count;
         _totalDX = 0;
         _totalDY = 0;
@@ -140,13 +147,13 @@ public class PrecisionGestureEngine
 
         if (_altHeld)
         {
-            KeyUp(VK_MENU);
+            _input.KeyUp(VirtualKey.Alt);
             _altHeld = false;
         }
 
         if (_dragging)
         {
-            LeftButton(down: false);
+            _input.LeftButton(down: false);
             _dragging = false;
             GestureTriggered?.Invoke("Tap-and-Drag: END");
         }
@@ -162,7 +169,7 @@ public class PrecisionGestureEngine
 
     private bool IsTap()
     {
-        double duration = (DateTime.UtcNow - _sessionStartTime).TotalMilliseconds;
+        double duration = (_utcNow() - _sessionStartTime).TotalMilliseconds;
         double travel = Math.Sqrt(_totalDX * _totalDX + _totalDY * _totalDY);
         return !_swipeTriggered
             && !_physicalUsedInSession
@@ -203,7 +210,7 @@ public class PrecisionGestureEngine
         if (_dragCandidate && !_dragging && TotalTravel() > TapMaxTravel)
         {
             _dragging = true;
-            LeftButton(down: true);
+            _input.LeftButton(down: true);
             GestureTriggered?.Invoke("Tap-and-Drag: START");
         }
 
@@ -213,7 +220,7 @@ public class PrecisionGestureEngine
         int moveX = (int)Math.Round(frameDx * gain);
         int moveY = (int)Math.Round(frameDy * gain);
         if (moveX != 0 || moveY != 0)
-            MouseMove(moveX, moveY);
+            _input.MouseMove(moveX, moveY);
     }
 
     private static double PointerAcceleration(double dx, double dy)
@@ -277,14 +284,14 @@ public class PrecisionGestureEngine
         {
             int ticks = (int)_scrollAccumY;
             _scrollAccumY -= ticks;
-            Wheel(ticks);
+            _input.Wheel(ticks);
         }
 
         if (Math.Abs(_scrollAccumX) >= ScrollEmitThreshold)
         {
             int ticks = (int)_scrollAccumX;
             _scrollAccumX -= ticks;
-            HorizontalWheel(ticks);
+            _input.HorizontalWheel(ticks);
         }
     }
 
@@ -296,7 +303,7 @@ public class PrecisionGestureEngine
         while (Math.Abs(_zoomAccum) >= ZoomStepDistance)
         {
             bool zoomIn = _zoomAccum > 0; // fingers spreading apart zooms in
-            ZoomStep(zoomIn);
+            _input.ZoomStep(zoomIn);
             _zoomAccum -= zoomIn ? ZoomStepDistance : -ZoomStepDistance;
         }
     }
@@ -371,7 +378,7 @@ public class PrecisionGestureEngine
         }
 
         GestureTriggered?.Invoke($"Gesture: {name} (App Switcher: Alt+Tab, held while fingers stay down)");
-        KeyDown(VK_MENU);
+        _input.KeyDown(VirtualKey.Alt);
         _altHeld = true;
         AppSwitchStep(forward: sign > 0);
     }
@@ -387,7 +394,7 @@ public class PrecisionGestureEngine
         // Content follows the fingers: swiping left brings in the desktop on the right.
         bool next = sign < 0;
         GestureTriggered?.Invoke($"Gesture: {name} ({(next ? "Next Desktop: Ctrl+Win+Right" : "Prev Desktop: Ctrl+Win+Left")})");
-        KeyCombo(VK_CONTROL, VK_LWIN, next ? VK_RIGHT : VK_LEFT);
+        _input.KeyCombo(VirtualKey.Control, VirtualKey.LeftWindows, next ? VirtualKey.Right : VirtualKey.Left);
     }
 
     private void FireAudioSwipe(string name, int sign)
@@ -396,7 +403,7 @@ public class PrecisionGestureEngine
         {
             bool nextTrack = sign > 0;
             GestureTriggered?.Invoke($"Gesture: {name} ({(nextTrack ? "Next Track" : "Previous Track")})");
-            KeyCombo(nextTrack ? VK_MEDIA_NEXT_TRACK : VK_MEDIA_PREV_TRACK);
+            _input.KeyCombo(nextTrack ? VirtualKey.MediaNextTrack : VirtualKey.MediaPreviousTrack);
             return;
         }
 
@@ -409,12 +416,12 @@ public class PrecisionGestureEngine
         if (sign < 0)
         {
             GestureTriggered?.Invoke($"Gesture: {name} (Task View: Win+Tab)");
-            KeyCombo(VK_LWIN, VK_TAB);
+            _input.KeyCombo(VirtualKey.LeftWindows, VirtualKey.Tab);
         }
         else
         {
             GestureTriggered?.Invoke($"Gesture: {name} (Show Desktop: Win+D)");
-            KeyCombo(VK_LWIN, VK_D);
+            _input.KeyCombo(VirtualKey.LeftWindows, VirtualKey.D);
         }
     }
 
@@ -426,15 +433,15 @@ public class PrecisionGestureEngine
             VolumeStep(up: sign < 0);
     }
 
-    private static void AppSwitchStep(bool forward)
+    private void AppSwitchStep(bool forward)
     {
         if (forward)
-            KeyCombo(VK_TAB);
+            _input.KeyCombo(VirtualKey.Tab);
         else
-            KeyCombo(VK_SHIFT, VK_TAB);
+            _input.KeyCombo(VirtualKey.Shift, VirtualKey.Tab);
     }
 
-    private static void VolumeStep(bool up) => KeyCombo(up ? VK_VOLUME_UP : VK_VOLUME_DOWN);
+    private void VolumeStep(bool up) => _input.KeyCombo(up ? VirtualKey.VolumeUp : VirtualKey.VolumeDown);
 
     #endregion
 
@@ -446,12 +453,12 @@ public class PrecisionGestureEngine
         {
             case 1 when settings.TapsEnabled:
                 GestureTriggered?.Invoke("Tap: 1-Finger (Left Click)");
-                LeftClick();
-                _lastTapTime = DateTime.UtcNow;
+                _input.LeftClick();
+                _lastTapTime = _utcNow();
                 break;
             case 2 when settings.TapsEnabled && settings.TwoFingerTapEnabled:
                 GestureTriggered?.Invoke("Tap: 2-Finger (Right Click)");
-                RightClick();
+                _input.RightClick();
                 break;
             case 3:
                 RunTapAction(settings.ThreeFingerTap, fingers);
@@ -470,16 +477,16 @@ public class PrecisionGestureEngine
         switch (action)
         {
             case TapAction.Search:
-                KeyCombo(VK_LWIN, VK_S);
+                _input.KeyCombo(VirtualKey.LeftWindows, VirtualKey.S);
                 break;
             case TapAction.NotificationCenter:
-                KeyCombo(VK_LWIN, VK_N);
+                _input.KeyCombo(VirtualKey.LeftWindows, VirtualKey.N);
                 break;
             case TapAction.PlayPause:
-                KeyCombo(VK_MEDIA_PLAY_PAUSE);
+                _input.KeyCombo(VirtualKey.MediaPlayPause);
                 break;
             case TapAction.MiddleClick:
-                MiddleClick();
+                _input.MiddleClick();
                 break;
         }
     }
@@ -509,12 +516,12 @@ public class PrecisionGestureEngine
         string state = down ? "DOWN" : "UP";
         if (_physicalIsRight)
         {
-            RightButton(down);
+            _input.RightButton(down);
             GestureTriggered?.Invoke($"Physical Right Click: {state}");
         }
         else
         {
-            LeftButton(down);
+            _input.LeftButton(down);
             GestureTriggered?.Invoke($"Physical Click: {state}");
         }
     }
