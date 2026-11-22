@@ -39,8 +39,9 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
   - 3-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
   - 3-finger swipe left / right: app switcher (`Alt + Tab` / `Alt + Shift + Tab`).
   - 3-finger tap: Windows Search (`Win + S`).
-  - 4-finger swipe left / right: switch virtual desktops (`Ctrl + Win + Left` / `Ctrl + Win + Right`).
-  - 4-finger swipe up / down: Task View (`Win + Tab`) / Action Center (`Win + A`).
+  - 4-finger swipe left / right: next / previous virtual desktop (`Ctrl + Win + Right` / `Ctrl + Win + Left`).
+  - 4-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
+  - 4-finger tap: Notification Center (`Win + N`).
 - **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, show/hide the console, exit.
 
 ### Limitations
