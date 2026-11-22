@@ -45,16 +45,14 @@ public class TrayIconManager : IDisposable
     public bool IsConsoleHidden { get; private set; } = false;
     public bool EnableNotifications { get; set; } = false;
 
-    private readonly bool _isAdminMode;
     private readonly bool _isElevated;
 
     public event Action? ToggleStartStop;
     public event Action? RequestRewake;
     public event Action? RequestExit;
 
-    public TrayIconManager(bool isAdminMode = false, bool isElevated = false)
+    public TrayIconManager(bool isElevated = false)
     {
-        _isAdminMode = isAdminMode;
         _isElevated = isElevated;
 
         _uiThread = new Thread(RunMessageLoop)
@@ -92,8 +90,7 @@ public class TrayIconManager : IDisposable
         
         // Header: Version & Edition Display
         var version = typeof(TrayIconManager).Assembly.GetName().Version?.ToString(3) ?? "1.1.2";
-        string tag = _isAdminMode ? "[Admin]" : "[PTP]";
-        var titleItem = new ToolStripMenuItem($"Logitech T650 Bridge v{version} {tag}")
+        var titleItem = new ToolStripMenuItem($"Logitech T650 Bridge v{version}")
         {
             Enabled = false,
             Font = new Font(Control.DefaultFont, FontStyle.Italic)
