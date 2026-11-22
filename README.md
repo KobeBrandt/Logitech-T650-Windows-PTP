@@ -107,11 +107,12 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 ├── T650Tray.slnx                 # Solution (app + tests)
 ├── Directory.Build.props         # Shared build settings: analyzers on, warnings are errors
 ├── .editorconfig                 # Code style and naming rules
-├── Installer/                    # WiX 3.14 MSI installer & scripts
-│   ├── T650Bridge/               # Tray app MSI definition & build script
-│   ├── Build-All-Installers.ps1  # Builds the MSI and SHA256SUMS.txt
-│   └── Bump-Version.ps1          # Version bump and rebuild script
-└── Dist/                         # Built MSI and checksums (not committed)
+├── Installer/                    # Inno Setup installer & scripts
+│   ├── T650Tray.iss              # Installer definition
+│   ├── Build-Installer.ps1       # Publishes the app and builds the setup .exe
+│   ├── Bump-Version.ps1          # Version bump and rebuild script
+│   └── License.rtf               # License shown in the setup wizard
+└── Dist/                         # Built setup .exe and checksums (not committed)
 ```
 
 ---
@@ -121,7 +122,7 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 ### Prerequisites
 * Windows 10 (1903+) or Windows 11 (x64)
 * [.NET 10 SDK](https://dotnet.microsoft.com/download)
-* [WiX Toolset v3.14](https://wixtoolset.org/) (only for building the MSI)
+* [Inno Setup 6](https://jrsoftware.org/isinfo.php) (only for building the installer): `winget install JRSoftware.InnoSetup`
 * PowerShell 7 (`pwsh`) (only for the installer scripts)
 
 ### Build and run the app
@@ -142,25 +143,21 @@ dotnet test T650Tray.slnx -c Release --collect:"Code Coverage;Format=cobertura" 
 The tests cover the gesture engine (with a recording input sink and a fake clock), the Windows touchpad settings mapping, the HID++ frame assembler and the icon generator. The tray UI, HID receiver and `Program` talk to real hardware and the desktop and are not unit tested.
 
 ### Continuous integration
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request, on `windows-latest`:
-* restore, build with analyzers (warnings fail), run tests with coverage and upload the report
-* `dotnet list package --vulnerable --include-transitive` (fails on any known vulnerable package)
-* gitleaks secret scan of the full git history
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request:
+* **Build, lint and test** (`windows-latest`): restore, build with analyzers (warnings fail), run tests with coverage and upload the report
+* **Build setup .exe** (`windows-latest`, after tests pass): installs Inno Setup and uploads `T650Tray-Setup-v<version>.exe` with its checksum as a run artifact
+* **Dependency scan** (`windows-latest`): `dotnet list package --vulnerable --include-transitive` (fails on any known vulnerable package)
+* **Secret scan** (`ubuntu-latest`): gitleaks over the full git history
 
-### Publish
+### Build the installer
 ```powershell
-dotnet publish "src\T650Bridge" -c Release -r win-x64 --no-self-contained -o "Installer\T650Bridge\bin\publish"
+pwsh -File "Installer\Build-Installer.ps1"
 ```
-
-### Build the MSI installer
-```powershell
-pwsh -File "Installer\Build-All-Installers.ps1" -Version "2.0.0"
-```
-Output in `Dist\`:
-* `Dist\T650Bridge-Setup-v2.0.0.msi`
+This publishes a self-contained win-x64 build (no .NET install needed on the target PC) and compiles `Installer\T650Tray.iss`. The version comes from `src\T650Bridge\T650Bridge.csproj`. Output in `Dist\`:
+* `Dist\T650Tray-Setup-v2.0.0.exe`
 * `Dist\SHA256SUMS.txt`
 
-The MSI (product name **Logitech T650 Tray**) installs to `Program Files\Logitech T650 Tray`, adds Start menu and desktop shortcuts, and adds a per-user autostart entry (`HKCU\...\Run`) that you can turn off in Task Manager.
+The setup (**Logitech T650 Tray**) needs admin rights, installs to `Program Files\Logitech T650 Tray`, adds Start menu shortcuts and an uninstaller, and offers two options, both ticked by default: **Start when I log in** (a per-user `HKCU\...\Run` entry, the same one the tray's Run at Login item controls) and a **desktop shortcut**.
 
 ### Bump the version
 ```powershell
