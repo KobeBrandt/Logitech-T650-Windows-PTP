@@ -55,6 +55,4 @@ $RECYCLE.BIN/
 Dist/
 publish/
 publish-sc/
-*.wixobj
-*.wixpdb
 
