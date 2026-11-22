@@ -90,8 +90,8 @@ public class TrayIconManager : IDisposable
         _contextMenu = new ContextMenuStrip();
         
         // Header: Version & Edition Display
-        var version = typeof(TrayIconManager).Assembly.GetName().Version?.ToString(3) ?? "1.1.2";
-        var titleItem = new ToolStripMenuItem($"Logitech T650 Bridge v{version}")
+        var version = typeof(TrayIconManager).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        var titleItem = new ToolStripMenuItem($"Logitech T650 Tray v{version}")
         {
             Enabled = false,
             Font = new Font(Control.DefaultFont, FontStyle.Italic)
@@ -294,41 +294,6 @@ public class TrayIconManager : IDisposable
             {
                 _notifyIcon.Icon = targetIcon;
                 _notifyIcon.Text = SafeTooltipText(tooltip);
-            }
-        });
-    }
-
-    public void UpdateStatus(string statusText, bool isConnected, bool isStreaming, bool isPaused)
-    {
-        PostToUiThread(() =>
-        {
-            if (_statusItem != null)
-            {
-                _statusItem.Text = $"Status: {statusText}";
-            }
-
-            if (_startStopItem != null)
-            {
-                _startStopItem.Text = isPaused ? "▶ Resume Gestures (Start)" : "⏸ Pause Gestures (Stop)";
-            }
-
-            if (_notifyIcon != null)
-            {
-                if (!isConnected)
-                {
-                    _notifyIcon.Icon = _iconDisconnected;
-                    _notifyIcon.Text = SafeTooltipText($"Logitech T650: {statusText}");
-                }
-                else if (isPaused)
-                {
-                    _notifyIcon.Icon = _iconPaused;
-                    _notifyIcon.Text = SafeTooltipText($"Logitech T650: Paused ({statusText})");
-                }
-                else
-                {
-                    _notifyIcon.Icon = _iconActive;
-                    _notifyIcon.Text = SafeTooltipText($"Logitech T650: Active ({statusText})");
-                }
             }
         });
     }

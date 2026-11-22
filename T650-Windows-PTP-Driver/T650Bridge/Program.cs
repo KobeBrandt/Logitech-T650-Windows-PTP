@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Principal;
 using T650Bridge.Gesture;
 using T650Bridge.Hidpp;
+using T650Bridge.Interop;
 using T650Bridge.Touch;
 using T650Bridge.UI;
 
@@ -14,17 +15,17 @@ class Program
 
     static void Main(string[] args)
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.1.2";
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
 
         bool isElevated = IsElevated();
 
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("===============================================================");
-        Console.WriteLine($" Logitech T650 Bridge v{version} - Tray Edition ");
+        Console.WriteLine($" Logitech T650 Tray v{version} ");
         Console.WriteLine("===============================================================");
         Console.ResetColor();
 
-        Console.WriteLine($"[Version] Bridge Daemon v{version} (Tray Edition)");
+        Console.WriteLine($"[Version] Logitech T650 Tray v{version}");
         string securityStatus = isElevated
             ? "Administrator (UIPI Bypass Active)"
             : "Standard User (Medium Integrity)";
@@ -45,15 +46,15 @@ class Program
         if (!isOnlyInstance)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[Notice] Another instance of Logitech T650 Bridge is already running. Exiting.");
+            Console.WriteLine("\n[Notice] Another instance of Logitech T650 Tray is already running. Exiting.");
             Console.ResetColor();
             return;
         }
 
-        AttachToInteractiveDesktop();
+        InteractiveDesktop.Attach();
 
-        bool hasDesktop = GetCursorPos(out var curPos);
-        Console.WriteLine($"[Desktop] Interactive winsta0 access: {(hasDesktop ? $"OK (Cursor at {curPos.X},{curPos.Y})" : "Limited")}");
+        bool hasDesktop = InteractiveDesktop.TryGetCursorPosition(out int cursorX, out int cursorY);
+        Console.WriteLine($"[Desktop] Interactive winsta0 access: {(hasDesktop ? $"OK (Cursor at {cursorX},{cursorY})" : "Limited")}");
 
         if (args.Contains("--test-only")) return;
 
@@ -245,60 +246,6 @@ class Program
 
         Console.WriteLine("\nShutting down bridge daemon...");
     }
-
-    private static void AttachToInteractiveDesktop()
-    {
-        try
-        {
-            const uint WINSTA_ALL_ACCESS = 0x37F;
-            const uint DESKTOP_ALL_ACCESS = 0x1FF;
-
-            IntPtr hWinSta = OpenWindowStation("winsta0", false, WINSTA_ALL_ACCESS);
-            if (hWinSta != IntPtr.Zero)
-            {
-                SetProcessWindowStation(hWinSta);
-                IntPtr hDesktop = OpenDesktop("Default", 0, false, DESKTOP_ALL_ACCESS);
-                if (hDesktop != IntPtr.Zero)
-                {
-                    SetThreadDesktop(hDesktop);
-                }
-            }
-        }
-        catch { }
-    }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr OpenWindowStation(string lpszWinSta, bool fInherit, uint dwDesiredAccess);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetProcessWindowStation(IntPtr hWinSta);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr OpenDesktop(string lpszDesktop, uint dwFlags, bool fInherit, uint dwDesiredAccess);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetThreadDesktop(IntPtr hDesktop);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern bool GetCursorPos(out POINT lpPoint);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetCursorPos(int X, int Y);
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr GetProcessWindowStation();
-
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern IntPtr GetThreadDesktop(uint dwThreadId);
-
-    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
-    private static extern uint GetCurrentThreadId();
-
-    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    private struct POINT { public int X; public int Y; }
 
     private static bool IsElevated()
     {

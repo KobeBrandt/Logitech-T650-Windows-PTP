@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using T650Bridge.Interop;
 using T650Bridge.Touch;
 using static T650Bridge.Gesture.InputSender;
 
@@ -67,7 +67,7 @@ public class PrecisionGestureEngine
 
     public void ProcessFrame(TouchFrame frame)
     {
-        EnsureInteractiveDesktop();
+        InteractiveDesktop.EnsureAttachedForCurrentThread();
 
         var contacts = frame.Contacts.Where(c => c.IsTouching).ToList();
         HandlePhysicalButton(frame.PhysicalButtonPressed, contacts);
@@ -526,51 +526,6 @@ public class PrecisionGestureEngine
         if (!settings.RightClickZoneEnabled || contacts.Count != 1) return false;
         return contacts[0].X >= RightClickZoneMinX && contacts[0].Y >= RightClickZoneMinY;
     }
-
-    #endregion
-
-    #region Interactive desktop attach
-
-    [ThreadStatic]
-    private static bool _threadDesktopAttached;
-
-    private static void EnsureInteractiveDesktop()
-    {
-        if (_threadDesktopAttached) return;
-        try
-        {
-            const uint WINSTA_ALL_ACCESS = 0x37F;
-            const uint DESKTOP_ALL_ACCESS = 0x1FF;
-
-            IntPtr hWinSta = OpenWindowStation("winsta0", false, WINSTA_ALL_ACCESS);
-            if (hWinSta != IntPtr.Zero)
-            {
-                SetProcessWindowStation(hWinSta);
-                IntPtr hDesktop = OpenDesktop("Default", 0, false, DESKTOP_ALL_ACCESS);
-                if (hDesktop != IntPtr.Zero)
-                {
-                    SetThreadDesktop(hDesktop);
-                }
-            }
-        }
-        catch { }
-        finally
-        {
-            _threadDesktopAttached = true;
-        }
-    }
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr OpenWindowStation(string lpszWinSta, bool fInherit, uint dwDesiredAccess);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetProcessWindowStation(IntPtr hWinSta);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern IntPtr OpenDesktop(string lpszDesktop, uint dwFlags, bool fInherit, uint dwDesiredAccess);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool SetThreadDesktop(IntPtr hDesktop);
 
     #endregion
 }
