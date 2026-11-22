@@ -1,6 +1,9 @@
 # Logitech T650 Tray
 
 [![CI](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/actions/workflows/ci.yml/badge.svg)](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/KobeBrandt/Logitech-T650-Windows-PTP)](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/releases/latest)
+
+**Download:** get `T650Tray-Setup-v<version>.exe` from the [latest release](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/releases/latest) and run it.
 
 A Windows tray app that brings multi-touch gestures to the **Logitech Wireless Rechargeable Touchpad T650** over the Logitech Unifying Receiver (`VID 0x046D`, `PID 0xC52B`).
 
@@ -159,10 +162,19 @@ This publishes a self-contained win-x64 build (no .NET install needed on the tar
 
 The setup (**Logitech T650 Tray**) needs admin rights, installs to `Program Files\Logitech T650 Tray`, adds Start menu shortcuts and an uninstaller, and offers two options, both ticked by default: **Start when I log in** (a per-user `HKCU\...\Run` entry, the same one the tray's Run at Login item controls) and a **desktop shortcut**.
 
-### Bump the version
-```powershell
-pwsh -File "Installer\Bump-Version.ps1" -NewVersion "2.0.1"
-```
+### Make a release
+1. Bump the version (updates the csproj and builds the setup locally):
+   ```powershell
+   pwsh -File "Installer\Bump-Version.ps1" -NewVersion "2.0.1"
+   ```
+2. Commit, tag and push:
+   ```powershell
+   git commit -am "bump version to 2.0.1"
+   git tag v2.0.1
+   git push origin main --tags
+   ```
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`. It checks that the tag matches the csproj version, builds and tests, builds the setup and publishes a GitHub release with `T650Tray-Setup-v<version>.exe` and `SHA256SUMS.txt` attached, using GitHub's auto-generated release notes.
 
 ---
 
