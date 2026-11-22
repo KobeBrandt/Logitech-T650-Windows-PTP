@@ -10,6 +10,8 @@ namespace T650Bridge;
 
 class Program
 {
+    private static readonly TimeSpan SettingsRefreshInterval = TimeSpan.FromSeconds(2);
+
     static void Main(string[] args)
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.1.2";
@@ -99,16 +101,19 @@ class Program
         bool silentStartup = args.Contains("--silent") || args.Contains("--tray") || args.Contains("--minimized");
         bool autoHide = !args.Contains("--console") && !args.Contains("--no-hide");
 
-        bool naturalScrolling = UserSettings.LoadNaturalScrolling();
-        gestureEngine.NaturalScrolling = naturalScrolling;
-        Console.WriteLine($"[Config] Natural Scrolling: {naturalScrolling}");
+        gestureEngine.Settings = TouchpadSettings.Load();
+        Console.WriteLine($"[Config] Windows touchpad settings: {gestureEngine.Settings}");
 
-        using var tray = new TrayIconManager(isElevated, naturalScrolling);
-        tray.NaturalScrollingChanged += enabled =>
+        // Re-read Windows touchpad settings so changes in Settings > Touchpad apply without a restart.
+        using var settingsTimer = new System.Threading.Timer(_ =>
         {
-            gestureEngine.NaturalScrolling = enabled;
-            Console.WriteLine($"\n[Tray] Natural Scrolling -> {enabled}");
-        };
+            var latest = TouchpadSettings.Load();
+            if (latest == gestureEngine.Settings) return;
+            gestureEngine.Settings = latest;
+            Console.WriteLine($"\n[Config] Windows touchpad settings changed: {latest}");
+        }, null, SettingsRefreshInterval, SettingsRefreshInterval);
+
+        using var tray = new TrayIconManager(isElevated);
         tray.EnableNotifications = enableNotifications;
         tray.UpdateState(DeviceConnectionState.SearchingForReceiver, isPaused: !enableGestures);
 
