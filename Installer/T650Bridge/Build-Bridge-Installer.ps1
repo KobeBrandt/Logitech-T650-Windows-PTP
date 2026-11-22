@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $repoRoot = Resolve-Path (Join-Path $scriptDir "..\..")
-$bridgeProj = Join-Path $repoRoot "T650-Windows-PTP-Driver\T650Bridge\T650Bridge.csproj"
+$bridgeProj = Join-Path $repoRoot "src\T650Bridge\T650Bridge.csproj"
 $objDir = Join-Path $scriptDir "obj"
 $publishDir = Join-Path $scriptDir "bin\publish"
 $distDir = Join-Path $repoRoot "Dist"
@@ -43,7 +43,7 @@ if (-not (Test-Path $candle) -or -not (Test-Path $light)) {
     Exit 1
 }
 
-$sourceIco = Join-Path $repoRoot "T650-Windows-PTP-Driver\T650Bridge\T650.ico"
+$sourceIco = Join-Path $repoRoot "src\T650Bridge\T650.ico"
 $licenseRtf = Join-Path $scriptDir "..\License.rtf"
 if (-not (Test-Path $objDir)) { New-Item -ItemType Directory -Path $objDir -Force | Out-Null }
 

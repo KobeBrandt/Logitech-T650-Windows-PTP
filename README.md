@@ -91,7 +91,7 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 ## Project Structure
 
 ```text
-├── T650-Windows-PTP-Driver/
+├── src/
 │   └── T650Bridge/               # .NET C# tray app
 │       ├── Hidpp/                # Logitech Unifying HID++ 2.0 communication
 │       ├── Touch/                # Frame reassembler & coordinate parsing
@@ -117,13 +117,13 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 
 ### Build and run the app
 ```powershell
-dotnet build "T650-Windows-PTP-Driver\T650Bridge" -c Release
-dotnet run --project "T650-Windows-PTP-Driver\T650Bridge" -c Release -- --console
+dotnet build "src\T650Bridge" -c Release
+dotnet run --project "src\T650Bridge" -c Release -- --console
 ```
 
 ### Publish
 ```powershell
-dotnet publish "T650-Windows-PTP-Driver\T650Bridge" -c Release -r win-x64 --no-self-contained -o "Installer\T650Bridge\bin\publish"
+dotnet publish "src\T650Bridge" -c Release -r win-x64 --no-self-contained -o "Installer\T650Bridge\bin\publish"
 ```
 
 ### Build the MSI installer

@@ -26,7 +26,7 @@ Write-Host " Bumping T650 Tray App Version -> $NewVersion ($fourPartVersion)" -F
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 2. Update T650Bridge.csproj
-$csprojPath = Join-Path $repoRoot "T650-Windows-PTP-Driver\T650Bridge\T650Bridge.csproj"
+$csprojPath = Join-Path $repoRoot "src\T650Bridge\T650Bridge.csproj"
 if (Test-Path $csprojPath) {
     Write-Host "`n[1/2] Updating $csprojPath..." -ForegroundColor Yellow
     $csprojContent = Get-Content $csprojPath -Raw
