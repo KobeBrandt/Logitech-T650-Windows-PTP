@@ -30,24 +30,44 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
 - **Protocol unlock:** resolves Feature `0x6100` (`TOUCHPAD_RAW_XY`) at runtime and sends `setRawReportState(0x05)` to start raw multi-touch streaming.
 - **Heartbeat:** keeps the 2.4 GHz Unifying connection alive.
 - **Hotplug:** detects the receiver being plugged in and the pad powering on or off, and re-unlocks raw mode automatically.
+- **Follows your Windows touchpad settings:** the app reads `Settings > Bluetooth & devices > Touchpad` (stored in `HKCU\Software\Microsoft\Windows\CurrentVersion\PrecisionTouchPad`) and re-reads it every 2 seconds, so changes apply without a restart. Missing values use the Windows 11 defaults.
+
+  | Windows setting | Registry value | Used for |
+  |---|---|---|
+  | Taps | `TapsEnabled` | 1-finger and 2-finger taps |
+  | Tap with two fingers to right-click | `TwoFingerTapEnabled` | 2-finger tap |
+  | Tap twice and drag to multi-select | `TapAndDrag` | Tap-and-drag |
+  | Press the lower right corner to right-click | `RightClickZoneEnabled` | Physical click in bottom-right corner |
+  | Drag two fingers to scroll | `PanEnabled` | 2-finger scroll |
+  | Pinch to zoom | `ZoomEnabled` | Pinch zoom |
+  | Scrolling direction | `ScrollDirection` | Vertical scroll direction (`0` = natural, content follows fingers) |
+  | Cursor speed | `CursorSpeed` | Pointer speed (`10` = default) |
+  | Three-finger swipes / tap | `ThreeFingerSlideEnabled` / `ThreeFingerTapEnabled` | 3-finger gestures |
+  | Four-finger swipes / tap | `FourFingerSlideEnabled` / `FourFingerTapEnabled` | 4-finger gestures |
+
+  The meanings of the 3/4-finger and `ScrollDirection` values come from community documentation, not an official Microsoft table. Swipes: `0` switch apps, `1` switch desktops, `2` audio and volume. Taps: `0` search, `1` notification center, `2` play/pause, `3` middle click. Other values do nothing.
 - **Gestures:**
-  - 1-finger glide: pointer motion with acceleration.
+  - 1-finger glide: pointer motion with acceleration, scaled by cursor speed.
   - 1-finger tap: left click.
-  - Physical button click: left button down/up, with drag and drop.
-  - 2-finger scroll: vertical and horizontal scrolling. Vertical direction follows the tray menu's **Natural Scrolling** toggle (on by default: content moves with your fingers), saved in `HKCU\Software\LogitechT650Ptp\Bridge`.
+  - Tap-and-drag: tap, then touch again within 300 ms and move to drag. Lifting ends the drag.
+  - Physical button click: left button down/up, with drag and drop. A press with two fingers, or with one finger in the bottom-right corner, is a right click.
+  - 2-finger scroll: vertical and horizontal scrolling.
+  - 2-finger pinch: zoom in / out (`Ctrl + wheel`).
   - 2-finger tap: right click.
-  - 3-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
-  - 3-finger swipe left / right: app switcher (`Alt + Tab` / `Alt + Shift + Tab`).
-  - 3-finger tap: Windows Search (`Win + S`).
-  - 4-finger swipe left / right: next / previous virtual desktop (`Ctrl + Win + Right` / `Ctrl + Win + Left`).
-  - 4-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
-  - 4-finger tap: Notification Center (`Win + N`).
-- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, toggle natural scrolling, toggle run at login, show/hide the console, exit.
+  - 3/4-finger swipes, depending on the Windows setting:
+    - **Switch apps and show desktop:** left / right opens the app switcher and keeps it open while your fingers stay down; keep moving to step through apps, lift to pick. Up: Task View (`Win + Tab`). Down: Show Desktop (`Win + D`).
+    - **Switch desktops and show desktop:** left / right goes to the next / previous virtual desktop (`Ctrl + Win + Right` / `Ctrl + Win + Left`). Up: Task View. Down: Show Desktop.
+    - **Change audio and volume:** up / down changes volume, and keeps stepping while you move. Right / left: next / previous track.
+  - 3/4-finger taps, depending on the Windows setting: Search (`Win + S`), Notification Center (`Win + N`), Play/Pause or middle click.
+  - Defaults: 3-finger swipes switch apps, 3-finger tap opens Search, 4-finger swipes switch desktops, 4-finger tap opens Notification Center.
+- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, toggle run at login, show/hide the console, exit.
 - **Run at login:** the tray menu's **Run at Login** item adds or removes a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry that starts the running exe with `--silent`.
 
 ### Limitations
-- Windows does not see the T650 as a Precision Touchpad. The Windows touchpad settings page does not apply.
-- Scrolling uses mouse wheel events, not native touchpad scrolling.
+- Windows does not see the T650 as a Precision Touchpad. The touchpad settings page only shows up if this PC also has a real precision touchpad; otherwise the defaults above are used.
+- Scrolling and zoom use mouse wheel events, not native touchpad scrolling. Zoom only works in apps that zoom on `Ctrl + wheel`.
+- Desktop switching jumps one desktop per swipe, without the animation that follows your fingers.
+- Edge swipes, touchpad sensitivity (`AAPThreshold`) and "leave touchpad on when a mouse is connected" are not supported.
 - Gestures do not reach elevated (Administrator) windows because of Windows UIPI. Use **Restart as Administrator** in the tray menu if you need that.
 - Gestures only work while the app is running.
 
