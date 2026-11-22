@@ -1,4 +1,6 @@
-# Logitech T650 Tray App for Windows
+# Logitech T650 Tray
+
+[![CI](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/actions/workflows/ci.yml/badge.svg)](https://github.com/KobeBrandt/Logitech-T650-Windows-PTP/actions/workflows/ci.yml)
 
 A Windows tray app that brings multi-touch gestures to the **Logitech Wireless Rechargeable Touchpad T650** over the Logitech Unifying Receiver (`VID 0x046D`, `PID 0xC52B`).
 
@@ -16,7 +18,7 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
 
 ```text
 ┌────────────────────────────────────────────────────────┐
-│  T650Bridge tray app (C# .NET 10)                      │
+│  Logitech T650 Tray (C# .NET 10, T650Bridge.exe)       │
 │  - Reads raw reports from the Logitech Unifying        │
 │    Receiver via HidSharp                               │
 │  - Handshakes Logitech HID++ 2.0 (TOUCHPAD_RAW_XY)     │
@@ -95,9 +97,16 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 │   └── T650Bridge/               # .NET C# tray app
 │       ├── Hidpp/                # Logitech Unifying HID++ 2.0 communication
 │       ├── Touch/                # Frame reassembler & coordinate parsing
-│       ├── Gesture/              # Gesture engine
-│       ├── UI/                   # Tray icon & icon generation
+│       ├── Gesture/              # Gesture engine, Windows touchpad settings, input sink
+│       ├── Interop/              # Interactive desktop attach
+│       ├── UI/                   # Tray icon, icon generation, run at login
 │       └── Program.cs            # Entry point
+├── tests/
+│   └── T650Bridge.Tests/         # xUnit tests
+├── .github/workflows/ci.yml      # GitHub Actions: build, lint, test, dependency and secret scan
+├── T650Tray.slnx                 # Solution (app + tests)
+├── Directory.Build.props         # Shared build settings: analyzers on, warnings are errors
+├── .editorconfig                 # Code style and naming rules
 ├── Installer/                    # WiX 3.14 MSI installer & scripts
 │   ├── T650Bridge/               # Tray app MSI definition & build script
 │   ├── Build-All-Installers.ps1  # Builds the MSI and SHA256SUMS.txt
@@ -117,9 +126,26 @@ Console keys: `r` re-wakes the pad, `h` hides/shows the console, `q` exits.
 
 ### Build and run the app
 ```powershell
-dotnet build "src\T650Bridge" -c Release
+dotnet build T650Tray.slnx -c Release
 dotnet run --project "src\T650Bridge" -c Release -- --console
 ```
+The build runs the .NET analyzers (`latest-recommended`) and code style rules from `.editorconfig`. Any warning fails the build.
+
+### Test
+```powershell
+dotnet test T650Tray.slnx -c Release
+```
+With a coverage report (Cobertura XML in `TestResults\`):
+```powershell
+dotnet test T650Tray.slnx -c Release --collect:"Code Coverage;Format=cobertura" --results-directory TestResults
+```
+The tests cover the gesture engine (with a recording input sink and a fake clock), the Windows touchpad settings mapping, the HID++ frame assembler and the icon generator. The tray UI, HID receiver and `Program` talk to real hardware and the desktop and are not unit tested.
+
+### Continuous integration
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request, on `windows-latest`:
+* restore, build with analyzers (warnings fail), run tests with coverage and upload the report
+* `dotnet list package --vulnerable --include-transitive` (fails on any known vulnerable package)
+* gitleaks secret scan of the full git history
 
 ### Publish
 ```powershell
@@ -128,17 +154,17 @@ dotnet publish "src\T650Bridge" -c Release -r win-x64 --no-self-contained -o "In
 
 ### Build the MSI installer
 ```powershell
-pwsh -File "Installer\Build-All-Installers.ps1" -Version "1.1.6"
+pwsh -File "Installer\Build-All-Installers.ps1" -Version "2.0.0"
 ```
 Output in `Dist\`:
-* `Dist\T650Bridge-Setup-v1.1.6.msi`
+* `Dist\T650Bridge-Setup-v2.0.0.msi`
 * `Dist\SHA256SUMS.txt`
 
-The MSI installs to Program Files, adds Start menu and desktop shortcuts, and adds a per-user autostart entry (`HKCU\...\Run`) that you can turn off in Task Manager.
+The MSI (product name **Logitech T650 Tray**) installs to `Program Files\Logitech T650 Tray`, adds Start menu and desktop shortcuts, and adds a per-user autostart entry (`HKCU\...\Run`) that you can turn off in Task Manager.
 
 ### Bump the version
 ```powershell
-pwsh -File "Installer\Bump-Version.ps1" -NewVersion "1.1.7"
+pwsh -File "Installer\Bump-Version.ps1" -NewVersion "2.0.1"
 ```
 
 ---
