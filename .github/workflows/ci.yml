@@ -35,6 +35,32 @@ jobs:
           name: coverage
           path: TestResults/**/*.cobertura.xml
 
+  installer:
+    name: Build setup .exe
+    needs: build-test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Inno Setup 6
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: ./Installer/Build-Installer.ps1
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: T650Tray-Setup
+          path: |
+            Dist/*.exe
+            Dist/SHA256SUMS.txt
+
   dependencies:
     name: Dependency scan
     runs-on: windows-latest
