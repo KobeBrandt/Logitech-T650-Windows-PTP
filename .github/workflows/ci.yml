@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build, lint and test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore T650Tray.slnx
+
+      - name: Build (analyzers on, warnings fail the build)
+        run: dotnet build T650Tray.slnx -c Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test T650Tray.slnx -c Release --no-build --collect:"Code Coverage;Format=cobertura" --results-directory TestResults
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: TestResults/**/*.cobertura.xml
+
+  security:
+    name: Dependency and secret scan
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check for vulnerable NuGet packages
+        shell: pwsh
+        run: |
+          dotnet restore T650Tray.slnx
+          $report = dotnet list T650Tray.slnx package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Output $report
+          if ($report -match 'has the following vulnerable packages') {
+            Write-Error 'Vulnerable packages found.'
+            exit 1
+          }
+
+      - name: Scan git history for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
