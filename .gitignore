@@ -1,10 +1,6 @@
 # ==========================================
-# Logitech T650 Windows PTP Project .gitignore
+# Logitech T650 Tray .gitignore
 # ==========================================
-
-# Reference sub-projects / external clones
-logitec-t650-macos-driver/
-T650drivers/
 
 # Visual Studio & IDE files
 .vs/
@@ -17,7 +13,7 @@ T650drivers/
 *.VC.db
 *.VC.opendb
 
-# Build Outputs (C# & C++)
+# Build Outputs
 [Bb]in/
 [Oo]bj/
 x64/
@@ -25,21 +21,16 @@ x86/
 ARM64/
 Debug/
 Release/
-ipch/
 
-# Driver Build Artifacts & Packages
-*.sys
+# Test results & coverage
+TestResults/
+coverage/
+*.coverage
+coverage.cobertura.xml
+
+# Certificates (never commit signing material)
 *.cer
-*.cat
-_reboots.log
-*.wdf
-*.lastcodeanalysissucceeded
-DriverTest/
-devcon.exe
-T650-Windows-PTP-Driver/VirtualPtpDriver/Package/*.dll
-T650-Windows-PTP-Driver/VirtualPtpDriver/Package/*.cat
-T650-Windows-PTP-Driver/VirtualPtpDriver/Package/*.cer
-T650-Windows-PTP-Driver/VirtualPtpDriver/Package/devcon.exe
+*.pfx
 
 # Logs & Temporary files
 *.log
