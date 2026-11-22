@@ -31,6 +31,7 @@ public class TrayIconManager : IDisposable
     private ToolStripMenuItem? _startStopItem;
     private ToolStripMenuItem? _rewakeItem;
     private ToolStripMenuItem? _notificationsItem;
+    private ToolStripMenuItem? _runAtLoginItem;
     private ToolStripMenuItem? _toggleConsoleItem;
     private ToolStripMenuItem? _exitItem;
 
@@ -154,6 +155,13 @@ public class TrayIconManager : IDisposable
         });
         _contextMenu.Items.Add(_notificationsItem);
 
+        // 5. Run at Login Toggle
+        _runAtLoginItem = new ToolStripMenuItem("🚀 Run at Login", null, (s, e) => ToggleRunAtLogin())
+        {
+            Checked = SafeIsRunAtLoginEnabled()
+        };
+        _contextMenu.Items.Add(_runAtLoginItem);
+
         _contextMenu.Items.Add(new ToolStripSeparator());
 
         // 4. Toggle Console Window (Show / Hide)
@@ -183,6 +191,36 @@ public class TrayIconManager : IDisposable
         _uiReady.Set();
 
         Application.Run();
+    }
+
+    private void ToggleRunAtLogin()
+    {
+        try
+        {
+            if (StartupRegistration.IsEnabled())
+                StartupRegistration.Disable();
+            else
+                StartupRegistration.Enable();
+        }
+        catch (Exception ex)
+        {
+            ShowBalloon("Logitech T650", $"Could not change Run at Login: {ex.Message}", ToolTipIcon.Error, force: true);
+        }
+
+        if (_runAtLoginItem != null)
+            _runAtLoginItem.Checked = SafeIsRunAtLoginEnabled();
+    }
+
+    private static bool SafeIsRunAtLoginEnabled()
+    {
+        try
+        {
+            return StartupRegistration.IsEnabled();
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private void PostToUiThread(Action action)
