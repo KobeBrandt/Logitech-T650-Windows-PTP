@@ -99,7 +99,16 @@ class Program
         bool silentStartup = args.Contains("--silent") || args.Contains("--tray") || args.Contains("--minimized");
         bool autoHide = !args.Contains("--console") && !args.Contains("--no-hide");
 
-        using var tray = new TrayIconManager(isElevated);
+        bool naturalScrolling = UserSettings.LoadNaturalScrolling();
+        gestureEngine.NaturalScrolling = naturalScrolling;
+        Console.WriteLine($"[Config] Natural Scrolling: {naturalScrolling}");
+
+        using var tray = new TrayIconManager(isElevated, naturalScrolling);
+        tray.NaturalScrollingChanged += enabled =>
+        {
+            gestureEngine.NaturalScrolling = enabled;
+            Console.WriteLine($"\n[Tray] Natural Scrolling -> {enabled}");
+        };
         tray.EnableNotifications = enableNotifications;
         tray.UpdateState(DeviceConnectionState.SearchingForReceiver, isPaused: !enableGestures);
 

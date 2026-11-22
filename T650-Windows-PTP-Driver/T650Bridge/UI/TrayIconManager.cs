@@ -32,6 +32,7 @@ public class TrayIconManager : IDisposable
     private ToolStripMenuItem? _rewakeItem;
     private ToolStripMenuItem? _notificationsItem;
     private ToolStripMenuItem? _runAtLoginItem;
+    private ToolStripMenuItem? _naturalScrollingItem;
     private ToolStripMenuItem? _toggleConsoleItem;
     private ToolStripMenuItem? _exitItem;
 
@@ -48,13 +49,17 @@ public class TrayIconManager : IDisposable
 
     private readonly bool _isElevated;
 
+    public bool NaturalScrolling { get; private set; }
+
+    public event Action<bool>? NaturalScrollingChanged;
     public event Action? ToggleStartStop;
     public event Action? RequestRewake;
     public event Action? RequestExit;
 
-    public TrayIconManager(bool isElevated = false)
+    public TrayIconManager(bool isElevated = false, bool naturalScrolling = true)
     {
         _isElevated = isElevated;
+        NaturalScrolling = naturalScrolling;
 
         _uiThread = new Thread(RunMessageLoop)
         {
@@ -155,6 +160,13 @@ public class TrayIconManager : IDisposable
         });
         _contextMenu.Items.Add(_notificationsItem);
 
+        // Natural Scrolling Toggle
+        _naturalScrollingItem = new ToolStripMenuItem("↕ Natural Scrolling", null, (s, e) => ToggleNaturalScrolling())
+        {
+            Checked = NaturalScrolling
+        };
+        _contextMenu.Items.Add(_naturalScrollingItem);
+
         // 5. Run at Login Toggle
         _runAtLoginItem = new ToolStripMenuItem("🚀 Run at Login", null, (s, e) => ToggleRunAtLogin())
         {
@@ -209,6 +221,23 @@ public class TrayIconManager : IDisposable
 
         if (_runAtLoginItem != null)
             _runAtLoginItem.Checked = SafeIsRunAtLoginEnabled();
+    }
+
+    private void ToggleNaturalScrolling()
+    {
+        NaturalScrolling = !NaturalScrolling;
+        try
+        {
+            UserSettings.SaveNaturalScrolling(NaturalScrolling);
+        }
+        catch (Exception ex)
+        {
+            ShowBalloon("Logitech T650", $"Could not save Natural Scrolling: {ex.Message}", ToolTipIcon.Warning, force: true);
+        }
+
+        if (_naturalScrollingItem != null)
+            _naturalScrollingItem.Checked = NaturalScrolling;
+        NaturalScrollingChanged?.Invoke(NaturalScrolling);
     }
 
     private static bool SafeIsRunAtLoginEnabled()

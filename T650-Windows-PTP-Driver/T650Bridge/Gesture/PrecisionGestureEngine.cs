@@ -34,6 +34,9 @@ public class PrecisionGestureEngine
 
     public event Action<string>? GestureTriggered;
 
+    /// <summary>When true, vertical two-finger scrolling moves content with the fingers.</summary>
+    public bool NaturalScrolling { get; set; } = true;
+
     public void ProcessFrame(TouchFrame frame)
     {
         EnsureInteractiveDesktop();
@@ -130,10 +133,11 @@ public class PrecisionGestureEngine
                     // 2-Finger Smooth Scrolling
                     if (trackedCount > 0)
                     {
-                        // Inverted Y: moving fingers down increases Y (frameDy > 0), so content moves down (scroll UP)
-                        // In Windows, negative WHEEL_DELTA scrolls DOWN.
-                        // Standard trackpad natural scroll: fingers moving UP (frameDy < 0) scrolls page DOWN.
-                        _scrollAccumY += (-frameDy * 6.0);
+                        // Fingers moving down give frameDy > 0. Positive WHEEL_DELTA scrolls UP.
+                        // Natural: content follows the fingers, so fingers down scrolls UP.
+                        // Traditional: fingers down scrolls DOWN, like a mouse wheel.
+                        double verticalSign = NaturalScrolling ? 1.0 : -1.0;
+                        _scrollAccumY += (verticalSign * frameDy * 6.0);
                         _scrollAccumX += (frameDx * 6.0);
 
                         if (Math.Abs(_scrollAccumY) >= 30)
