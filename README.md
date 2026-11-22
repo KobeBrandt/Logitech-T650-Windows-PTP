@@ -34,7 +34,7 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
   - 1-finger glide: pointer motion with acceleration.
   - 1-finger tap: left click.
   - Physical button click: left button down/up, with drag and drop.
-  - 2-finger scroll: vertical and horizontal scrolling.
+  - 2-finger scroll: vertical and horizontal scrolling. Vertical direction follows the tray menu's **Natural Scrolling** toggle (on by default: content moves with your fingers), saved in `HKCU\Software\LogitechT650Ptp\Bridge`.
   - 2-finger tap: right click.
   - 3-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
   - 3-finger swipe left / right: app switcher (`Alt + Tab` / `Alt + Shift + Tab`).
@@ -42,7 +42,7 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
   - 4-finger swipe left / right: next / previous virtual desktop (`Ctrl + Win + Right` / `Ctrl + Win + Left`).
   - 4-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
   - 4-finger tap: Notification Center (`Win + N`).
-- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, toggle run at login, show/hide the console, exit.
+- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, toggle natural scrolling, toggle run at login, show/hide the console, exit.
 - **Run at login:** the tray menu's **Run at Login** item adds or removes a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry that starts the running exe with `--silent`.
 
 ### Limitations
