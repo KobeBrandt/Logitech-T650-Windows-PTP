@@ -42,7 +42,8 @@ The Logitech T650 was released during the Windows 7 / 8 era. On Windows 10 and 1
   - 4-finger swipe left / right: next / previous virtual desktop (`Ctrl + Win + Right` / `Ctrl + Win + Left`).
   - 4-finger swipe up / down: Task View (`Win + Tab`) / Show Desktop (`Win + D`).
   - 4-finger tap: Notification Center (`Win + N`).
-- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, show/hide the console, exit.
+- **Tray icon:** status, pause/resume gestures, re-wake the pad, toggle notifications, toggle run at login, show/hide the console, exit.
+- **Run at login:** the tray menu's **Run at Login** item adds or removes a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entry that starts the running exe with `--silent`.
 
 ### Limitations
 - Windows does not see the T650 as a Precision Touchpad. The Windows touchpad settings page does not apply.
